@@ -9,6 +9,8 @@ extern "C" {
 #include <QToolButton>
 #include <QWidgetAction>
 #include <QTreeView>
+#include <QNetworkRequest>
+#include <QWebFrame>
 
 #include "QtAwesome.h"
 #include "seahub-messages-monitor.h"
@@ -25,11 +27,18 @@ extern "C" {
 #include "server-status-dialog.h"
 #include "main-window.h"
 #include "cloud-view.h"
+#include "activities-view.h"
+#include "activities-model.h"
+#include "api/seafile-events.h"
+
+#define toCStr(_s)   ((_s).isNull() ? NULL : (_s).toUtf8().data())
 
 namespace {
 
 const int kRefreshReposInterval = 1000 * 60 * 5; // 5 min
 const int kRefreshStatusInterval = 1000;
+
+const char* kAuthorization = "Authorization";
 
 enum {
     INDEX_LOADING_VIEW = 0,
@@ -42,6 +51,7 @@ CloudView::CloudView(QWidget *parent)
     : QWidget(parent),
       in_refresh_(false),
       list_repo_req_(NULL),
+      get_events_req_(NULL),
       clone_task_dialog_(NULL)
 
 {
@@ -51,12 +61,19 @@ CloudView::CloudView(QWidget *parent)
 
     createRepoModelView();
     createLoadingView();
+    createActivitiesView();
     mStack->insertWidget(INDEX_LOADING_VIEW, loading_view_);
     mStack->insertWidget(INDEX_REPOS_VIEW, repos_tree_);
+    mStack->setContentsMargins(0, 0, 0, 0);
+
+    mTabWidget->clear();
+    mTabWidget->addTab(mStack, tr("Libraries"));
+    mTabWidget->addTab(activities_view_, tr("Activities"));
 
     createToolBar();
     updateAccountInfoDisplay();
     prepareAccountButtonMenu();
+
 
     mDownloadTasksInfo->setText("0");
     mDownloadTasksBtn->setIcon(awesome->icon(icon_download_alt));
@@ -91,6 +108,9 @@ CloudView::CloudView(QWidget *parent)
 
     connect(mDownloadTasksBtn, SIGNAL(clicked()), this, SLOT(showCloneTasksDialog()));
     connect(mServerStatusBtn, SIGNAL(clicked()), this, SLOT(showServerStatusDialog()));
+
+    connect(activities_view_->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(loadMoreActivities(int)));
+
 }
 
 CloneTasksDialog *CloudView::cloneTasksDialog()
@@ -110,6 +130,13 @@ void CloudView::createRepoModelView()
 
     repos_tree_->setModel(repos_model_);
     repos_tree_->setItemDelegate(new RepoItemDelegate);
+}
+
+void CloudView::createActivitiesView()
+{
+    activities_view_ = new ActivitiesView;
+    activities_model_ = new ActivitiesModel;
+    activities_view_->setModel(activities_model_);
 }
 
 void CloudView::createLoadingView()
@@ -281,6 +308,13 @@ void CloudView::refreshRepos()
             this, SLOT(refreshRepos(const std::vector<ServerRepo>&)));
     connect(list_repo_req_, SIGNAL(failed(int)), this, SLOT(refreshReposFailed()));
     list_repo_req_->send();
+
+    //FOR TEST
+    get_events_req_ = new GetEventsRequest(current_account_);
+    connect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
+            this, SLOT(getEvents(const SeafileEvents&)));
+    connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
+    get_events_req_->send();
 }
 
 void CloudView::refreshRepos(const std::vector<ServerRepo>& repos)
@@ -294,10 +328,33 @@ void CloudView::refreshRepos(const std::vector<ServerRepo>& repos)
     showRepos();
 }
 
+void CloudView::getEvents(const SeafileEvents &events)
+{
+//    std::vector<SeafileEvent> events_list = events.events_list;
+    printf("The events other prop is %d and %d\n\n", events.more, events.more_offset);
+    activities_model_->setEvents(events);
+//    SeafileEvent event;
+  //    for (size_t i = 0; i < events_list.size(); ++i) {
+//       event = events_list.at(i);
+//       printf("The event-type is %s\n.", toCStr(event.event_type));
+//       printf("The event-repo_id is %s\n.", toCStr(event.repo_id));
+//       printf("The event-repo_name is %s\n.", toCStr(event.repo_name));
+//       printf("The event-author is %s\n.", toCStr(event.author));
+//       printf("The event-nickname is %s\n.", toCStr(event.nick_name));
+//       printf("The event-description is %s\n.", toCStr(event.description));
+//       printf("=======================================================\n");
+//    }
+}
+
 void CloudView::refreshReposFailed()
 {
     qDebug("failed to refresh repos\n");
     in_refresh_ = false;
+}
+
+void CloudView::getEventsFailed()
+{
+    printf("failed to get events\n");
 }
 
 bool CloudView::hasAccount()
@@ -482,6 +539,32 @@ void CloudView::onRefreshClicked()
     if (hasAccount()) {
         showLoadingView();
         refreshRepos();
+    }
+}
+
+void CloudView::loadMoreActivities(int value)
+{
+    if (value == activities_view_->verticalScrollBar()->maximum()) {
+        printf("The more flag more is %d.\n", activities_model_->events().more);
+        printf("The more offset is %d.\n", activities_model_->events().more_offset);
+        if (activities_model_->events().more) {
+
+            if (get_events_req_) {
+                disconnect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
+                        this, SLOT(getEvents(const SeafileEvents&)));
+                disconnect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
+                delete get_events_req_;
+
+            }
+            get_events_req_ = new GetEventsRequest(current_account_);
+            get_events_req_->setEventsOffset("start", QString::number(activities_model_->events().more_offset));
+            connect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
+                    this, SLOT(getEvents(const SeafileEvents&)));
+            connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
+            get_events_req_->send();
+
+        }
+
     }
 }
 

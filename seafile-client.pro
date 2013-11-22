@@ -69,7 +69,11 @@ HEADERS += ui_clone-tasks-dialog.h \
            src/utils/rsa.h \
            src/utils/utils.h \
            src/utils/translate-commit-desc.h \
-           third_party/QtAwesome/QtAwesome.h
+           third_party/QtAwesome/QtAwesome.h \
+           src/ui/activities-view.h \
+           src/api/seafile-events.h \
+    src/ui/activities-model.h \
+    src/avatar-mgr.h
 FORMS += ui/clone-tasks-dialog.ui \
          ui/cloud-view.ui \
          ui/create-repo-dialog.ui \
@@ -121,8 +125,12 @@ SOURCES += src/account-mgr.cpp \
            src/utils/log.c \
            src/utils/rsa.cpp \
            src/utils/utils.cpp \
+           src/ui/activities-view.cpp \
+           src/api/seafile-events.cpp \
            src/utils/translate-commit-desc.cpp \
-           third_party/QtAwesome/QtAwesome.cpp
+           third_party/QtAwesome/QtAwesome.cpp \
+    src/ui/activities-model.cpp \
+    src/avatar-mgr.cpp
 RESOURCES += seafile-client.qrc third_party/QtAwesome/QtAwesome.qrc
 TRANSLATIONS += i18n/seafile_de_DE.ts \
                 i18n/seafile_fr_FR.ts \
@@ -157,3 +165,4 @@ macx {
 macx:LIBS += -framework Carbon -framework Cocoa
 
 QT += network
+QT += webkit

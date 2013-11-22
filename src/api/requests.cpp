@@ -15,6 +15,7 @@ const char *kApiLoginUrl = "/api2/auth-token/";
 const char *kListReposUrl = "/api2/repos/";
 const char *kCreateRepoUrl = "/api2/repos/";
 const char *kMessagesCountUrl = "/api2/msgs_count/";
+const char *kEventsUrl = "/api2/events/";
 
 } // namespace
 
@@ -196,4 +197,35 @@ void GetSeahubMessagesRequest::requestSuccess(QNetworkReply& reply)
     int group_messages = ret.value("group_messages").toInt();
     int personal_messages = ret.value("personal_messages").toInt();
     emit success(group_messages, personal_messages);
+}
+
+/*
+ * GetEventsRequest
+ */
+GetEventsRequest::GetEventsRequest(const Account& account)
+    : SeafileApiRequest (QUrl(account.serverUrl.toString() + kEventsUrl),
+                         SeafileApiRequest::METHOD_GET, account.token)
+{
+
+}
+
+void GetEventsRequest::setEventsOffset(const QString &name, const QString &offset)
+{
+    setParam(name, offset);
+}
+
+void GetEventsRequest::requestSuccess(QNetworkReply& reply)
+{
+    json_error_t error;
+    json_t *root = parseJSON(reply, &error);
+    printf("more flag is%d\n\n",json_is_true(json_object_get(root, "more")));
+    if (!root) {
+        qDebug("GetEventsRequest:failed to parse json:%s\n", error.text);
+        emit failed(0);
+        return;
+    }
+    QScopedPointer<json_t, JsonPointerCustomDeleter> json(root);
+
+    SeafileEvents events = SeafileEvents::fromJSON(json.data(), &error);
+    emit success(events);
 }
