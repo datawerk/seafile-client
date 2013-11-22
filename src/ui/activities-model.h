@@ -1,12 +1,12 @@
 #ifndef ACTIVITIESMODEL_H
 #define ACTIVITIESMODEL_H
 
-#include <QStandardItemModel>
+#include <QAbstractListModel>
 #include "api/seafile-events.h"
 
 class SeafileEvents;
 
-class ActivitiesModel : public QStandardItemModel
+class ActivitiesModel : public QAbstractListModel
 {
     Q_OBJECT
 public:

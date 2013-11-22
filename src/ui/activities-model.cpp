@@ -3,7 +3,7 @@
 #include <QIcon>
 
 ActivitiesModel::ActivitiesModel(QObject *parent) :
-    QStandardItemModel(parent)
+    QAbstractListModel(parent)
 {
 
 }
@@ -29,7 +29,6 @@ void ActivitiesModel::setEvents(const SeafileEvents &events)
 
 void ActivitiesModel::clear()
 {
-    QStandardItemModel::clear();
     events_.events_list.clear();
 }
 
@@ -44,9 +43,6 @@ QVariant ActivitiesModel::data(const QModelIndex &index, int role) const
         return QVariant();
     }
 
-    if (role != Qt::DisplayRole) {
-        return QVariant();
-    }
     if (role == Qt::DecorationRole) {
         return QIcon(":/images/account.png");
     }
