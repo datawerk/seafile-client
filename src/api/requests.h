@@ -79,6 +79,21 @@ private:
     Q_DISABLE_COPY(GetAvatarRequest)
 };
 
+class DownloadAvatarRequest : public SeafileApiRequest {
+    Q_OBJECT
+
+public:
+    explicit DownloadAvatarRequest(const QString& avatar_url);
+protected slots:
+    void requestSuccess(QNetworkReply& reply);
+
+signals:
+    void success(const QByteArray&);
+
+private:
+    Q_DISABLE_COPY(DownloadAvatarRequest)
+};
+
 class RepoDownloadInfo {
 public:
     QString relay_id;

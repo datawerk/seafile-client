@@ -261,3 +261,18 @@ void GetAvatarRequest::requestSuccess(QNetworkReply& reply)
 
     emit success(QString(text.data()));
 }
+/*
+ * DownloadAvatarRequest
+ */
+DownloadAvatarRequest::DownloadAvatarRequest(const QString& avatar_url)
+    : SeafileApiRequest (QUrl(avatar_url), SeafileApiRequest::METHOD_GET)
+{
+}
+
+void DownloadAvatarRequest::requestSuccess(QNetworkReply& reply)
+{
+    const QByteArray& avatar = reply.readAll();
+
+    emit success(avatar);
+}
+

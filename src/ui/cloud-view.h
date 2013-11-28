@@ -59,10 +59,11 @@ private slots:
     void onRefreshClicked();
 
     void loadMoreActivities(int value);
+    void currentTabChanged(int index);
 private:
     Q_DISABLE_COPY(CloudView)
 
-    void createLoadingView();
+    void createLoadingView(QWidget** loading_view);
     void createRepoModelView();
     void createActivitiesView();
     void prepareAccountButtonMenu();
@@ -75,8 +76,10 @@ private:
     void refreshServerStatus();
     void refreshTasksInfo();
     void refreshTransferRate();
+    void refreshActivities();
 
     bool in_refresh_;
+    bool is_account_changed_;
     QTimer *refresh_timer_;
 
     QTimer *refresh_status_bar_timer_;
@@ -84,7 +87,8 @@ private:
     RepoTreeModel *repos_model_;
 
     RepoTreeView *repos_tree_;
-    QWidget *loading_view_;
+    QWidget *repos_loading_view_;
+    QWidget *events_loading_view_;
 
     ListReposRequest *list_repo_req_;
     GetEventsRequest *get_events_req_;

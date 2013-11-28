@@ -10,7 +10,6 @@
 #include "utils/utils.h"
 #include "configurator.h"
 #include "seafile-applet.h"
-#include "sqlite3.h"
 
 AvatarManager::AvatarManager(QObject *parent) :
     QObject(parent)
@@ -38,76 +37,49 @@ QIcon AvatarManager::getAvatar(const Account& account, QString& user)
 
 }
 
-int AvatarManager::start()
-{
-    const char *errmsg;
-    const char *sql;
-
-    QString db_path = QDir(seafApplet->configurator()->seafileDir()).filePath("avatars.db");
-    if (sqlite3_open (toCStr(db_path), &db)) {
-        errmsg = sqlite3_errmsg (db);
-        qDebug("failed to open avatars database %s: %s",
-               toCStr(db_path), errmsg ? errmsg : "no error given");
-
-        seafApplet->errorAndExit(tr("failed to open avatars databse"));
-        return -1;
-    }
-
-    sql = "CREATE TABLE IF NOT EXISTS Avatars (url VARCHAR(24), "
-        "username VARCHAR(15), token VARCHAR(40), lastVisited INTEGER, "
-        "PRIMARY KEY(url, username))";
-    sqlite_query_exec (db, sql);
-
-    return 0;
-}
-
 void AvatarManager::getAvatarUrl(const QString &avatar_url)
 {
-
-    QNetworkRequest request;
     QUrl url(server_url_);
     url.setPath(avatar_url);
-    request.setUrl(url);
-    network_manager_ = new QNetworkAccessManager(this);
-    //avatar_format_ = avatarFormat(avatar_url);
-    reply_ =  network_manager_->get(request);
-    connect(reply_, SIGNAL(sslErrors(QList<QSslError>)), this, SLOT(onSslErrors(QList<QSslError>)));
-    connect(network_manager_, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply*)));
+    QString url_str = url.toString();
+    if (!req_list_.contains(url_str)) {
+        dld_avatar_req_ = new DownloadAvatarRequest(url_str);
+        connect(dld_avatar_req_, SIGNAL(success(const QByteArray&)),
+                this, SLOT(downloadAvatar(const QByteArray&)));
+        connect(dld_avatar_req_, SIGNAL(failed(int)), this, SLOT(downloadAvatarFailed(int)));
+        dld_avatar_req_->send();
+        req_list_.push_back(url_str);
+    }
 }
 
 void AvatarManager::getAvatarUrlFailed(int code)
 {
-    printf("Get avatar failed,the error code is %d\n", code);
+    printf("Get avatar url failed,the error code is %d\n", code);
 }
 
-void AvatarManager::replyFinished(QNetworkReply *reply)
+void AvatarManager::downloadAvatar(const QByteArray& avatar_byte)
 {
-    if (reply->error() != QNetworkReply::NoError) {
-        printf("Error happened.Error code is %d\n", reply->error());
-    } else {
-        QByteArray avatar = reply->readAll();
-        QString avatar_name = hash(user_ + server_url_);
-        saveAvatar(avatar, avatar_name);
-    }
+    QString avatar_name = hash(user_ + server_url_);
+    saveAvatar(avatar_byte, avatar_name);
 }
 
-void AvatarManager::onSslErrors(QList<QSslError>)
+void AvatarManager::downloadAvatarFailed(int code)
 {
-    reply_->ignoreSslErrors();
+    printf("Download avatar failed,the error code is %d\n", code);
 }
 
 void AvatarManager::requestAvatar(const Account &account, const QString &user)
 {
-    get_avatar_req_ = new GetAvatarRequest(account, user);
     server_url_ = account.serverUrl.toString();
     user_ = user;
+    get_avatar_req_ = new GetAvatarRequest(account, user);
     connect(get_avatar_req_, SIGNAL(success(const QString&)),
             this, SLOT(getAvatarUrl(const QString&)));
     connect(get_avatar_req_, SIGNAL(failed(int)), this, SLOT(getAvatarUrlFailed(int)));
     get_avatar_req_->send();
 }
 
-void AvatarManager::saveAvatar(QByteArray avatar, QString& avatar_name)
+void AvatarManager::saveAvatar(const QByteArray& avatar, QString& avatar_name)
 {
     QFile avatar_file(avatars_dir_ + avatar_name);
     avatar_file.open(QIODevice::WriteOnly);
@@ -127,17 +99,3 @@ QString AvatarManager::hash(const QString& str, QCryptographicHash::Algorithm al
     return QString(result);
 }
 
-QString AvatarManager::avatarFormat(const QString &avatar_url)
-{
-    int length = avatar_url.length();
-    int index;
-
-    for (size_t i = length-1; i > 0; --i) {
-        if (avatar_url.at(i) == QChar('.')) {
-            index = i;
-            break;
-        }
-    }
-
-    return avatar_url.right(length-index);
-}

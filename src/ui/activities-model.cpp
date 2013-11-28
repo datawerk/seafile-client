@@ -44,6 +44,11 @@ void ActivitiesModel::setCurrentAccount(Account &account)
     current_account_ = account;
 }
 
+void ActivitiesModel::clear()
+{
+    events_.events_list.clear();
+}
+
 void ActivitiesModel::avatarReady(const QString& avatar_user)
 {
     avatar_user_ = avatar_user;

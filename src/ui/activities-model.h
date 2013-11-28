@@ -18,6 +18,7 @@ public:
     int rowCount(const QModelIndex &parent) const;
     void insertData(const QVariant& variant);
     void setCurrentAccount(Account& account);
+    void clear();
 signals:
     
 public slots:

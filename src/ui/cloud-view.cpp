@@ -42,7 +42,7 @@ const char* kAuthorization = "Authorization";
 
 enum {
     INDEX_LOADING_VIEW = 0,
-    INDEX_REPOS_VIEW
+    INDEX_LIST_VIEW
 };
 
 }
@@ -50,6 +50,7 @@ enum {
 CloudView::CloudView(QWidget *parent)
     : QWidget(parent),
       in_refresh_(false),
+      is_account_changed_(false),
       list_repo_req_(NULL),
       get_events_req_(NULL),
       clone_task_dialog_(NULL)
@@ -60,15 +61,21 @@ CloudView::CloudView(QWidget *parent)
     seahub_messages_monitor_ = new SeahubMessagesMonitor(this);
 
     createRepoModelView();
-    createLoadingView();
+    createLoadingView(&repos_loading_view_);
+    createLoadingView(&events_loading_view_);
     createActivitiesView();
-    mStack->insertWidget(INDEX_LOADING_VIEW, loading_view_);
-    mStack->insertWidget(INDEX_REPOS_VIEW, repos_tree_);
+    mStack->insertWidget(INDEX_LOADING_VIEW, repos_loading_view_);
+    mStack->insertWidget(INDEX_LIST_VIEW, repos_tree_);
     mStack->setContentsMargins(0, 0, 0, 0);
+
+    mStack1->insertWidget(INDEX_LOADING_VIEW, events_loading_view_);
+    mStack1->insertWidget(INDEX_LIST_VIEW, activities_view_);
+    mStack1->setContentsMargins(0, 0, 0, 0);
+    //mStack1->setCurrentIndex(1);
 
     mTabWidget->clear();
     mTabWidget->addTab(mStack, tr("Libraries"));
-    mTabWidget->addTab(activities_view_, tr("Activities"));
+    mTabWidget->addTab(mStack1, tr("Activities"));
 
     createToolBar();
     updateAccountInfoDisplay();
@@ -111,6 +118,7 @@ CloudView::CloudView(QWidget *parent)
 
     connect(activities_view_->verticalScrollBar(), SIGNAL(valueChanged(int)), this, SLOT(loadMoreActivities(int)));
 
+    connect(mTabWidget, SIGNAL(currentChanged(int)), this, SLOT(currentTabChanged(int)));
 }
 
 CloneTasksDialog *CloudView::cloneTasksDialog()
@@ -139,12 +147,12 @@ void CloudView::createActivitiesView()
     activities_view_->setModel(activities_model_);
 }
 
-void CloudView::createLoadingView()
+void CloudView::createLoadingView(QWidget** loading_view)
 {
-    loading_view_ = new QWidget(this);
+    *loading_view = new QWidget(this);
 
     QVBoxLayout *layout = new QVBoxLayout;
-    loading_view_->setLayout(layout);
+    (*loading_view)->setLayout(layout);
 
     QMovie *gif = new QMovie(":/images/loading.gif");
     QLabel *label = new QLabel;
@@ -166,7 +174,7 @@ void CloudView::showLoadingView()
 
 void CloudView::showRepos()
 {
-    mStack->setCurrentIndex(INDEX_REPOS_VIEW);
+    mStack->setCurrentIndex(INDEX_LIST_VIEW);
 
     create_repo_action_->setEnabled(true);
 }
@@ -246,7 +254,7 @@ void CloudView::setCurrentAccount(const Account& account)
         repos_model_->clear();
         showLoadingView();
         refreshRepos();
-
+        refreshActivities();
         seahub_messages_monitor_->refresh();
 
         updateAccountInfoDisplay();
@@ -283,6 +291,7 @@ void CloudView::onAccountItemClicked()
         return;
     }
 
+    is_account_changed_ = true;
     setCurrentAccount(account);
     updateAccountMenu();
 }
@@ -309,12 +318,6 @@ void CloudView::refreshRepos()
     connect(list_repo_req_, SIGNAL(failed(int)), this, SLOT(refreshReposFailed()));
     list_repo_req_->send();
 
-    //FOR TEST
-    get_events_req_ = new GetEventsRequest(current_account_);
-    connect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
-            this, SLOT(getEvents(const SeafileEvents&)));
-    connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
-    get_events_req_->send();
 }
 
 void CloudView::refreshRepos(const std::vector<ServerRepo>& repos)
@@ -330,20 +333,10 @@ void CloudView::refreshRepos(const std::vector<ServerRepo>& repos)
 
 void CloudView::getEvents(const SeafileEvents &events)
 {
-//    std::vector<SeafileEvent> events_list = events.events_list;
     activities_model_->setCurrentAccount(current_account_);
     activities_model_->setEvents(events);
-//    SeafileEvent event;
-  //    for (size_t i = 0; i < events_list.size(); ++i) {
-//       event = events_list.at(i);
-//       printf("The event-type is %s\n.", toCStr(event.event_type));
-//       printf("The event-repo_id is %s\n.", toCStr(event.repo_id));
-//       printf("The event-repo_name is %s\n.", toCStr(event.repo_name));
-//       printf("The event-author is %s\n.", toCStr(event.author));
-//       printf("The event-nickname is %s\n.", toCStr(event.nick_name));
-//       printf("The event-description is %s\n.", toCStr(event.description));
-//       printf("=======================================================\n");
-//    }
+    mStack1->setCurrentIndex(INDEX_LIST_VIEW);
+    is_account_changed_ = false;
 }
 
 void CloudView::refreshReposFailed()
@@ -476,6 +469,20 @@ void CloudView::refreshTransferRate()
     mDownloadRate->setText(tr("%1 kB/s").arg(down_rate / 1024));
 }
 
+void CloudView::refreshActivities()
+{
+    activities_model_->clear();
+    mStack1->setCurrentIndex(INDEX_LOADING_VIEW);
+    if (get_events_req_) {
+        delete get_events_req_;
+    }
+    get_events_req_ = new GetEventsRequest(current_account_);
+    connect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
+            this, SLOT(getEvents(const SeafileEvents&)));
+    connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
+    get_events_req_->send();
+}
+
 void CloudView::refreshStatusBar()
 {
     if (!seafApplet->mainWindow()->isVisible()) {
@@ -564,6 +571,13 @@ void CloudView::loadMoreActivities(int value)
 
         }
 
+    }
+}
+
+void CloudView::currentTabChanged(int index)
+{
+    if (index == 1 && is_account_changed_) {
+        refreshActivities();
     }
 }
 
