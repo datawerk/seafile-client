@@ -28,7 +28,7 @@ ENDIF (MSYS)
 ####################
 ###### BEGIN: QT configuration
 ####################
-FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtNetwork)
+FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtNetwork QtWebKit)
 INCLUDE(${QT_USE_FILE})
 
 
@@ -36,6 +36,7 @@ INCLUDE(${QT_USE_FILE})
 SET(moc_headers
   src/seafile-applet.h
   src/account-mgr.h
+  src/avatar-mgr.h
   src/configurator.h
   src/daemon-mgr.h
   src/message-listener.h
@@ -46,6 +47,7 @@ SET(moc_headers
   src/api/api-client.h
   src/api/api-request.h
   src/api/requests.h
+  src/api/seafile-events.h
   src/rpc/rpc-client.h
   src/ui/main-window.h
   src/ui/init-seafile-dialog.h
@@ -64,6 +66,9 @@ SET(moc_headers
   src/ui/clone-tasks-table-model.h
   src/ui/clone-tasks-table-view.h
   src/ui/server-status-dialog.h
+  src/ui/activities-view.h
+  src/ui/activities-model.h
+  src/ui/activities-delegate.h
   third_party/QtAwesome/QtAwesome.h
 )
 
@@ -153,6 +158,7 @@ SET(seafile_client_sources
   src/main.cpp
   src/seafile-applet.cpp
   src/account-mgr.cpp
+  src/avatar-mgr.cpp
   src/ccnet-init.cpp
   src/daemon-mgr.cpp
   src/configurator.cpp
@@ -165,6 +171,7 @@ SET(seafile_client_sources
   src/api/api-request.cpp
   src/api/requests.cpp
   src/api/server-repo.cpp
+  src/api/seafile-events.cpp
   src/rpc/rpc-client.cpp
   src/rpc/local-repo.cpp
   src/rpc/clone-task.cpp
@@ -190,6 +197,9 @@ SET(seafile_client_sources
   src/ui/clone-tasks-table-model.cpp
   src/ui/clone-tasks-table-view.cpp
   src/ui/server-status-dialog.cpp
+  src/ui/activities-view.cpp
+  src/ui/activities-model.cpp
+  src/ui/activities-delegate.cpp
   third_party/QtAwesome/QtAwesome.cpp
   ${platform_specific_sources}
 )

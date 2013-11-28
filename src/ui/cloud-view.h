@@ -13,10 +13,16 @@ class QToolButton;
 class QToolBar;
 
 class ListReposRequest;
+class GetEventsRequest;
 class ServerRepo;
 class RepoTreeView;
 class RepoTreeModel;
-class CloneTasksDialog; class SeahubMessagesMonitor;
+class CloneTasksDialog;
+class SeahubMessagesMonitor;
+class CloneTasksDialog;
+class ActivitiesView;
+class ActivitiesModel;
+class SeafileEvents;
 
 class CloudView : public QWidget,
                   public Ui::CloudView
@@ -33,7 +39,6 @@ public:
 protected:
     void showEvent(QShowEvent *event);
     void hideEvent(QHideEvent *event);
-
 public slots:
     void showAddAccountDialog();
     void deleteAccount();
@@ -42,7 +47,9 @@ public slots:
 private slots:
     void refreshRepos();
     void refreshRepos(const std::vector<ServerRepo>& repos);
+    void getEvents(const SeafileEvents& events);
     void refreshReposFailed();
+    void getEventsFailed();
     void setCurrentAccount(const Account&account);
     void updateAccountMenu();
     void onAccountItemClicked();
@@ -51,11 +58,13 @@ private slots:
     void showServerStatusDialog();
     void onRefreshClicked();
 
+    void loadMoreActivities(int value);
 private:
     Q_DISABLE_COPY(CloudView)
 
     void createLoadingView();
     void createRepoModelView();
+    void createActivitiesView();
     void prepareAccountButtonMenu();
     void createToolBar();
     void updateAccountInfoDisplay();
@@ -78,6 +87,7 @@ private:
     QWidget *loading_view_;
 
     ListReposRequest *list_repo_req_;
+    GetEventsRequest *get_events_req_;
 
     // Toolbar and actions
     QToolBar *tool_bar_;
@@ -96,6 +106,9 @@ private:
     CloneTasksDialog* clone_task_dialog_;
 
     SeahubMessagesMonitor *seahub_messages_monitor_;
+
+    ActivitiesView* activities_view_;
+    ActivitiesModel* activities_model_;
 };
 
 

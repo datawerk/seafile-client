@@ -6,6 +6,7 @@
 
 #include "api-request.h"
 #include "server-repo.h"
+#include "seafile-events.h"
 
 class QNetworkReply;
 
@@ -47,6 +48,36 @@ private:
     Q_DISABLE_COPY(ListReposRequest)
 };
 
+class GetEventsRequest : public SeafileApiRequest {
+    Q_OBJECT
+
+public:
+    explicit GetEventsRequest(const Account& account);
+    void setEventsOffset(const QString& name, const QString& offset);
+protected slots:
+    void requestSuccess(QNetworkReply& reply);
+
+signals:
+    void success(const SeafileEvents& events);
+
+private:
+    Q_DISABLE_COPY(GetEventsRequest)
+};
+
+class GetAvatarRequest : public SeafileApiRequest {
+    Q_OBJECT
+
+public:
+    explicit GetAvatarRequest(const Account& account, const QString& avatar_user);
+protected slots:
+    void requestSuccess(QNetworkReply& reply);
+
+signals:
+    void success(const QString&);
+
+private:
+    Q_DISABLE_COPY(GetAvatarRequest)
+};
 
 class RepoDownloadInfo {
 public:
