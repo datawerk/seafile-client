@@ -29,6 +29,7 @@ extern "C" {
 #include "cloud-view.h"
 #include "activities-view.h"
 #include "activities-model.h"
+#include "activities-delegate.h"
 #include "api/seafile-events.h"
 
 #define toCStr(_s)   ((_s).isNull() ? NULL : (_s).toUtf8().data())
@@ -71,7 +72,6 @@ CloudView::CloudView(QWidget *parent)
     mStack1->insertWidget(INDEX_LOADING_VIEW, events_loading_view_);
     mStack1->insertWidget(INDEX_LIST_VIEW, activities_view_);
     mStack1->setContentsMargins(0, 0, 0, 0);
-    //mStack1->setCurrentIndex(1);
 
     mTabWidget->clear();
     mTabWidget->addTab(mStack, tr("Libraries"));
@@ -144,7 +144,12 @@ void CloudView::createActivitiesView()
 {
     activities_view_ = new ActivitiesView;
     activities_model_ = new ActivitiesModel;
+    activities_delegate_ = new ActivitiesDelegate;
+
+    activities_view_->setItemDelegate(activities_delegate_);
     activities_view_->setModel(activities_model_);
+
+    //activities_view_->showMaximized();
 }
 
 void CloudView::createLoadingView(QWidget** loading_view)
@@ -479,7 +484,7 @@ void CloudView::refreshActivities()
     get_events_req_ = new GetEventsRequest(current_account_);
     connect(get_events_req_, SIGNAL(success(const SeafileEvents&)),
             this, SLOT(getEvents(const SeafileEvents&)));
-    connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed()));
+    connect(get_events_req_, SIGNAL(failed(int)), this, SLOT(getEventsFailed(int)));
     get_events_req_->send();
 }
 

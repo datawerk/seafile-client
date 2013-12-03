@@ -57,5 +57,5 @@ QString SeafileEvent::descrip()
         description = QString("Deleted") + " \"" + repo_name + "\"";
     }
 
-    return description;
+    return nick_name +" "+ description;
 }

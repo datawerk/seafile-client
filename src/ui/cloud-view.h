@@ -22,6 +22,7 @@ class SeahubMessagesMonitor;
 class CloneTasksDialog;
 class ActivitiesView;
 class ActivitiesModel;
+class ActivitiesDelegate;
 class SeafileEvents;
 
 class CloudView : public QWidget,
@@ -113,6 +114,8 @@ private:
 
     ActivitiesView* activities_view_;
     ActivitiesModel* activities_model_;
+    ActivitiesDelegate* activities_delegate_;
+
 };
 
 
