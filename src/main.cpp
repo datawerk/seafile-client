@@ -9,6 +9,7 @@
 #include <glib-object.h>
 #include <stdio.h>
 
+#include "utils/utils.h"
 #include "utils/process.h"
 #include "seafile-applet.h"
 #include "QtAwesome.h"
@@ -35,8 +36,8 @@ int main(int argc, char *argv[])
 #endif
 
     if (count_process(APPNAME) > 1) {
-        QMessageBox::warning(NULL, SEAFILE_CLIENT_BRAND,
-                             QObject::tr("%1 is already running").arg(SEAFILE_CLIENT_BRAND),
+        QMessageBox::warning(NULL, getBrand(),
+                             QObject::tr("%1 is already running").arg(getBrand()),
                              QMessageBox::Ok);
         return -1;
     }
@@ -46,9 +47,9 @@ int main(int argc, char *argv[])
     app.setQuitOnLastWindowClosed(false);
 
     // see QSettings documentation
-    QCoreApplication::setOrganizationName(SEAFILE_CLIENT_BRAND);
+    QCoreApplication::setOrganizationName(getBrand());
     QCoreApplication::setOrganizationDomain("seafile.com");
-    QCoreApplication::setApplicationName(QString("%1 Client").arg(SEAFILE_CLIENT_BRAND));
+    QCoreApplication::setApplicationName(QString("%1 Client").arg(getBrand()));
 
     // initialize i18n
     QTranslator qtTranslator;

@@ -3,6 +3,8 @@
 
 #include <QObject>
 
+#include "utils/utils.h"
+
 class Configurator;
 class DaemonManager;
 class SeafileRpcClient;

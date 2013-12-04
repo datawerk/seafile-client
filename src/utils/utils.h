@@ -6,6 +6,8 @@
 #include <QDir>
 #include <QMap>
 
+#define SEAFILE_CLIENT_BRAND "Seafile"
+
 #if defined(XCODE_APP)
 #define RESOURCE_PATH(_name)  (QDir(QCoreApplication::applicationDirPath()).filePath(QString("../Resources/")+(_name)))
 #else
@@ -40,5 +42,7 @@ bool parse_key_value_pairs (char *string, KeyValueFunc func, void *data);
 QString translateCommitTime(qint64 timestamp);
 
 QMap<QString, QVariant> mapFromJSON(json_t *json, json_error_t *error);
+
+QString getBrand();
 
 #endif

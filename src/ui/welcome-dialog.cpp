@@ -7,7 +7,7 @@
 WelcomeDialog::WelcomeDialog(QWidget *parent) : QDialog(parent)
 {
     setupUi(this);
-    setWindowTitle(tr("%1 Initialzation").arg(SEAFILE_CLIENT_BRAND));
+    setWindowTitle(tr("%1 Initialzation").arg(getBrand()));
     setWindowIcon(QIcon(":/images/seafile.png"));
 
     mHelpImage->setPixmap(QPixmap(":/images/seafile-download-library.png"));

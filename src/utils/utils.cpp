@@ -136,7 +136,7 @@ get_win_run_key (HKEY *pKey)
 }
 
 static int
-add_to_auto_start (const wchar_t *appname_w, const wchar_t *path_w)
+add_to_auto_start (const wchar_t *path_w)
 {
     HKEY hKey;
     LONG result = get_win_run_key(&hKey);
@@ -146,7 +146,7 @@ add_to_auto_start (const wchar_t *appname_w, const wchar_t *path_w)
 
     DWORD n = sizeof(wchar_t) * (wcslen(path_w) + 1);
 
-    result = RegSetValueExW (hKey, appname_w,
+    result = RegSetValueExW (hKey, L"Seafile",
                              0, REG_SZ, (const BYTE *)path_w, n);
 
     RegCloseKey(hKey);
@@ -159,7 +159,7 @@ add_to_auto_start (const wchar_t *appname_w, const wchar_t *path_w)
 }
 
 static int
-delete_from_auto_start(const char *appname)
+delete_from_auto_start()
 {
     HKEY hKey;
     LONG result = get_win_run_key(&hKey);
@@ -167,10 +167,10 @@ delete_from_auto_start(const char *appname)
         return -1;
     }
 
-    result = RegDeleteValue (hKey, appname);
+    result = RegDeleteValue (hKey, "Seafile");
     RegCloseKey(hKey);
     if (result != ERROR_SUCCESS) {
-        qDebug("Failed to remove auto start value for %s\n", appname);
+        qDebug("Failed to remove auto start value for Seafile\n");
         return -1;
     }
 
@@ -189,7 +189,7 @@ get_seafile_auto_start()
     char buf[MAX_PATH] = {0};
     DWORD len = sizeof(buf);
     result = RegQueryValueEx (hKey,             /* Key */
-                              SEAFILE_CLIENT_BRAND,        /* value */
+                              "Seafile",        /* value */
                               NULL,             /* reserved */
                               NULL,             /* output type */
                               (LPBYTE)buf,      /* output data */
@@ -215,11 +215,11 @@ set_seafile_auto_start(int on)
             return -1;
         }
 
-        result = add_to_auto_start (QString::fromUtf8(SEAFILE_CLIENT_BRAND).toStdWString().c_str(), applet_path);
+        result = add_to_auto_start (applet_path);
 
     } else {
         /* turn off auto start */
-        result = delete_from_auto_start(SEAFILE_CLIENT_BRAND);
+        result = delete_from_auto_start();
     }
     return result;
 }
@@ -348,3 +348,7 @@ QString translateCommitTime(qint64 timestamp) {
     }
 }
 
+QString getBrand()
+{
+    return QString::fromUtf8(SEAFILE_CLIENT_BRAND);
+}
